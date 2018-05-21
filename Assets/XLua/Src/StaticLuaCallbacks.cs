@@ -24,6 +24,11 @@ namespace XLua
 
     public partial class StaticLuaCallbacks
     {
+        /// <summary>
+        /// new added 在lua中写 lua print 的时候所调用的方法
+        /// </summary>
+        public static event Action<string> onLuaCallPrintHandler;
+
         internal LuaCSFunction GcMeta, ToStringMeta, EnumAndMeta, EnumOrMeta;
 
         internal LuaCSFunction StaticCSFunctionWraper, FixCSFunctionWraper;
@@ -623,7 +628,15 @@ namespace XLua
 
                     LuaAPI.lua_pop(L, 1);  /* pop result */
                 }
-                UnityEngine.Debug.Log("LUA: " + s);
+
+                if (onLuaCallPrintHandler != null)
+                {
+                    onLuaCallPrintHandler.Invoke(s);
+                }
+                else
+                {
+                    UnityEngine.Debug.Log("LUA: " + s);
+                }
                 return 0;
             }
             catch (System.Exception e)
