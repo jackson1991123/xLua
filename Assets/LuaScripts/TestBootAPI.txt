@@ -1,0 +1,8 @@
+require("System.LuaGloble")
+
+TestBootAPI = {}
+
+function TestBootAPI:Init(thisTransform)
+    self.thisTransform = thisTransform;
+    self.child = thisTransform:Find("child")
+end

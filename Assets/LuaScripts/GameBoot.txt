@@ -1,0 +1,5 @@
+GameBoot = {}
+
+function GameBoot.StartGame()
+    CS.UnityEngine.Debug.Log("Lua Start");
+end

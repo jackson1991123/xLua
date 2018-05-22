@@ -1,0 +1,9 @@
+require("System.LuaGloble")
+
+TestBoot = {}
+
+function TestBoot:Awake(apiScript)
+    self.apiScript = apiScript
+    self.thisTransform = apiScript.thisTransform
+    Log(self.apiScript.child.name)
+end

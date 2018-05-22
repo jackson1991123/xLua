@@ -33,13 +33,24 @@ namespace XLua.useless
 /// </summary>
 public class LuaManager : MonoBehaviour
 {
+    /// <summary>
+    /// 加载方式，根据filePathFormat所给的后缀名自行判定的
+    /// </summary>
+    public enum LoadMode
+    {
+        Auto,
+        IO,
+        AssetBundle,
+    }
+
     private static LuaManager g_instance = null;
     public static LuaManager Get() { return g_instance; }
 
+    [Tooltip("使用的加载模式，设置为Auto会根据filePathFormat的后缀名判定")]
+    public LoadMode usingLoadMode = LoadMode.Auto;
+
     [Tooltip("modulename->filepath的格式\n#dataPath#:Application.dataPath\n")]
-    public string filePathFormat = "#dataPath#/luascripts/{0}";
-    private const string bytesTail = ".bytes";
-    private const string luaTail = ".lua";
+    public string filePathFormat = "#dataPath#/luascripts/{0}.lua";
 
     [Tooltip("是否用VSCode断点Debug")]
     public bool vscodeDebug = true;
@@ -66,6 +77,10 @@ public class LuaManager : MonoBehaviour
         filePathFormat = filePathFormat.Replace("#dataPath#", Application.dataPath);
         filePathFormat = filePathFormat.Replace("#persistentDataPath#", Application.persistentDataPath);
 
+        if (usingLoadMode == LoadMode.Auto)
+        {
+            usingLoadMode = filePathFormat.EndsWith(".asb") ? LoadMode.AssetBundle : LoadMode.IO;
+        }
         StartUp();
     }
 
@@ -74,6 +89,16 @@ public class LuaManager : MonoBehaviour
         if (!isRunning)
         {
             lua = new LuaEnv();
+
+            if (usingLoadMode == LoadMode.IO)
+            {
+                lua.AddLoader(ModuleFileContent_SystemIO_Bytes);
+            }
+            if (usingLoadMode == LoadMode.AssetBundle)
+            {
+                lua.AddLoader(ModuleFileContent_AssetBundle_Bytes);
+            }
+
             if (vscodeDebug)
             {
                 XLua.DebugExtension.XLua_Debug_VSCode.StartUp(this, lua);
@@ -96,26 +121,48 @@ public class LuaManager : MonoBehaviour
         meta.Set("__index", lua.Global);
         scriptTable.SetMetaTable(meta);
         meta.Dispose();
-        
+
+        byte[] content = usingLoadMode == LoadMode.AssetBundle ? ModuleFileContent_AssetBundle_Bytes(ref moduleName) : ModuleFileContent_SystemIO_Bytes(ref moduleName);
+        if (content != null)
+        {
+            lua.DoString(content, moduleName, scriptTable);
+        }
+        else
+        {
+            throw new System.Exception(string.Format("[{0}]:不存在", moduleName));
+        }
 
         return scriptTable;
     }
 
-    private string ModuleFileContent(string moduleName)
+    private byte[] ModuleFileContent_AssetBundle_Bytes(ref string moduleName)
     {
-        /*
-        if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor)
-        {
-            //file mode io on 
-            pathBuilder.AppendFormat(filePathFormat, moduleName);
-            pathBuilder.Append(bytesTail);
-
-        }
-        
-
-
+        pathBuilder.AppendFormat(filePathFormat, moduleName.Replace(".", "/"));
+        pathBuilder.Append(".asb");
+        string path = pathBuilder.ToString();
         pathBuilder.Length = 0;
-        */
-        return string.Empty;
+
+        AssetBundle bundle = AssetBundle.LoadFromFile(path);
+        if (bundle != null)
+        {
+            TextAsset text = bundle.LoadAsset<TextAsset>(moduleName);
+            if (text != null)
+            {
+                return text.bytes;
+            }
+        }
+        return null;
+    }
+
+    private byte[] ModuleFileContent_SystemIO_Bytes(ref string moduleName)
+    {
+        pathBuilder.AppendFormat(filePathFormat, moduleName.Replace(".", "/"));
+        string path = pathBuilder.ToString();
+        pathBuilder.Length = 0;
+        if (File.Exists(path))
+        {
+            return File.ReadAllBytes(path);
+        }
+        return null;
     }
 }
