@@ -1,6 +1,19 @@
 Transform = CS.UnityEngine.Transform
 Log = CS.UnityEngine.Debug.Log
 
+WaitForSeconds = CS.UnityEngine.WaitForSeconds
+yield_return = (require'cs_coroutine').yield_return
+
+require("List")
+require("Dictionary")
+
+function New(class)
+	local o = {};
+	setmetatable(o, class);
+	class.__index = class;
+	return o;
+end
+
 function class(classname, supername, supermodule)  
     _G[classname] = {}
     _G[classname].classname = classname

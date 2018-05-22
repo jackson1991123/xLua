@@ -1,3 +1,5 @@
+require("System.LuaGloble")
+
 GameBoot = {}
 
 function GameBoot.StartGame()

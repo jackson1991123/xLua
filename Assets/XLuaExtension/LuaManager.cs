@@ -114,6 +114,14 @@ public class LuaManager : MonoBehaviour
         StartUp();
     }
 
+    private void Update()
+    {
+        if (isRunning)
+        {
+            lua.Tick();
+        }
+    }
+
     public LuaTable CreateLuaObject(string moduleName)
     {
         LuaTable meta = lua.NewTable();

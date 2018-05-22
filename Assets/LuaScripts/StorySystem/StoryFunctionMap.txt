@@ -1,0 +1,10 @@
+--所有故事的总表
+StoryFunctionMap = {}
+
+--执行某个storyfunction
+function StoryFunctionMap:Execute (storyName)
+    local storyFunction = self.storyName
+    if storyFunction ~= nil then
+        storyFunction()
+    end
+end

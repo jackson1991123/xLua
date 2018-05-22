@@ -1,0 +1,16 @@
+require("System.LuaGloble")
+
+--并行节点
+SpawnStoryNode = {}
+
+function SpawnStoryNode.New(tag)
+    local node = New(SpawnStoryNode);
+    node.tag = tag;
+    node.childNode = nil;
+    node.subNodes = List.New();
+    return node;
+end
+
+function SpawnStoryNode:AddSubNode(addedSubNode)
+    self.subNodes:Add(addedSubNode);
+end
